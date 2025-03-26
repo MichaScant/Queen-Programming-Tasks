@@ -16,9 +16,14 @@ import statistics
 
 from github import Auth
 
+from dotenv import load_dotenv
+
 from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
+
+# Load environment variables from .env file
+load_dotenv()
 
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
@@ -89,7 +94,11 @@ def print_stastics(stats):
         print(stat)
 
 def get_statistics():
-    auth = Auth.Token('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')
+    token = os.environ.get('GITHUB_TOKEN')
+    if not token:
+        raise EnvironmentError("GITHUB_TOKEN environment variable is not set. Please set it with your GitHub Personal Access Token.")
+    
+    auth = Auth.Token(token)
     
     g = Github(auth=auth)
     
