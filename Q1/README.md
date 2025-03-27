@@ -21,4 +21,9 @@ API for this part, but you may use any other tool or library).
     - Scraper searches accesses each repository and accesses each file list.
     - Folders are recursively searched through until all files are found.
     - For file extensions that may be a programming language, the scraper accesses the file details page
-    - File language and line count are scraped from the html
+    - File language and line count are scraped from the HTML
+ 
+## Running the script
+
+Use python3 git_repo_stats.py followed by a Github account name to run the file on a specific Github account (Ex: python3 git_repo_stats.py Kaggle
+- if no account is specified, the program will default to using Kaggle
