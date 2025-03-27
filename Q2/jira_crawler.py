@@ -1,11 +1,13 @@
-import scrapy
 import re
 import os
 import xml.etree.ElementTree as ET
 import csv
+import sys
 from bs4 import BeautifulSoup
 from datetime import datetime
+import validators
 
+import scrapy
 from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
@@ -17,6 +19,7 @@ class GithubSpider(scrapy.Spider):
     
     def __init__(self, *args, **kwargs):
         super(GithubSpider, self).__init__(*args, **kwargs)
+        self.url = kwargs.get('url')
 
     def start_requests(self):
         self.headers = {
@@ -24,8 +27,7 @@ class GithubSpider(scrapy.Spider):
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         }
             
-        url = "https://issues.apache.org/jira/browse/CAMEL-10597"
-        yield scrapy.Request(url=url, callback=self.parse_report, headers=self.headers)
+        yield scrapy.Request(url=self.url, callback=self.parse_report, headers=self.headers)
 
     def parse_report(self, response):
         # Find the XML export link
@@ -131,14 +133,20 @@ class GithubSpider(scrapy.Spider):
 
 def main():
 
+    url = "https://issues.apache.org/jira/browse/CAMEL-10597"
+    
+    if len(sys.argv) != 1:
+        if validators.url(sys.argv[1]):
+            url = sys.argv[1]
+        
     process = CrawlerProcess()
     
     def spider_closed(spider):
         print("Processing completed, here are the following results:")
-        
+
     dispatcher.connect(spider_closed, signal=signals.spider_closed)
 
-    process.crawl(GithubSpider)
+    process.crawl(GithubSpider, url=url)
     process.start()
     
 if __name__ == "__main__":
