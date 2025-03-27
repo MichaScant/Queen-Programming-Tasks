@@ -16,7 +16,8 @@ Specifically, I want to get all properties of the issue CAMEL-10597
 - “Dates”, such as (Created=1481726528/‘‘2016-12-14T14:42:08+0000’’, where 1481726528 is the epoch),
 - “Description”, such as (‘‘Assume I have rest path ...’’),
 - “Comments”, such as (ASF GitHub Bot:1481745300:14/Dec/16 14:55: ‘‘GitHub user bobpaulin opened a pull request: ...’’).
-- The example output is: Ln1 Type,...,Assignee,...,Created,Created Epoch,...,Description,Comments Ln2 Bug,...,Claus Ibsen,...,2016-12-14T14:42:08+0000,1481726528,...,Assume I have rest path ...,ASF GitHub Bot:1481745300:14/Dec/16 14:55:‘‘GitHub user bobpaulin opened a pull request: ...
+
+The example output is: Ln1 Type,...,Assignee,...,Created,Created Epoch,...,Description,Comments Ln2 Bug,...,Claus Ibsen,...,2016-12-14T14:42:08+0000,1481726528,...,Assume I have rest path ...,ASF GitHub Bot:1481745300:14/Dec/16 14:55:‘‘GitHub user bobpaulin opened a pull request: ...
 
 ## Implementation
 
