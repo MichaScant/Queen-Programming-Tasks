@@ -3,8 +3,6 @@ import os
 import re
 import yaml
 import statistics
-from github import Github
-from github import Auth
 from dotenv import load_dotenv
 
 # Load environment variables from .env file

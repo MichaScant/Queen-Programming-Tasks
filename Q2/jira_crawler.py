@@ -12,18 +12,16 @@ from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
 
-TOKEN = os.environ.get('GITHUB_TOKEN')
-
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
     
     def __init__(self, *args, **kwargs):
         super(GithubSpider, self).__init__(*args, **kwargs)
         self.url = kwargs.get('url')
-
+    
     def start_requests(self):
         self.headers = {
-            'Authorization': f'token {TOKEN}',
+            'Authorization': f'token {os.environ.get('GITHUB_TOKEN')}',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         }
             
