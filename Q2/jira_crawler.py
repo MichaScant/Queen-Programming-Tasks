@@ -6,6 +6,7 @@ import sys
 from bs4 import BeautifulSoup
 from datetime import datetime
 import validators
+import logging
 
 import scrapy
 from scrapy.crawler import CrawlerProcess
@@ -22,8 +23,9 @@ class GithubSpider(scrapy.Spider):
     
     def __init__(self, *args, **kwargs):
         super(GithubSpider, self).__init__(*args, **kwargs)
+        logging.getLogger('scrapy').setLevel(logging.WARNING)
         self.url = kwargs.get('url')
-    
+
     # Starts the scraping process
     def start_requests(self):
         self.headers = {

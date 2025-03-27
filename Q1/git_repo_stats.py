@@ -16,6 +16,7 @@ from github_spider import GithubSpider
 load_dotenv()
 
 def print_stastics(stats):
+    print("Basic Github Statistics:")
     for stat in stats:
         print(stat)
 
@@ -69,7 +70,7 @@ def main():
     process = CrawlerProcess()
     
     def spider_closed(spider):
-        print("Processing completed, results:")
+        print("Total and Median Line Counts by Language:")
 
         for title, data in spider.processed_languages_extensions_count.items():
             median = 0

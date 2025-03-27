@@ -3,6 +3,7 @@ import os
 import re
 import yaml
 import statistics
+import logging
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -18,6 +19,7 @@ class GithubSpider(scrapy.Spider):
     
     def __init__(self, *args, **kwargs):
         super(GithubSpider, self).__init__(*args, **kwargs)
+        logging.getLogger('scrapy').setLevel(logging.WARNING)
         
         self.github_account = kwargs.get('github_account')
         self.token = kwargs.get('token')
@@ -53,7 +55,6 @@ class GithubSpider(scrapy.Spider):
     def parse_account(self, response):
         repo_list = response.css('ul.ListView-module__ul--vMLEZ')
         repo_items = repo_list.css('li')
-        print("repo_items", len(repo_items))
         for repo in repo_items:
             url = f"https://github.com{repo.css('h3 a::attr(href)').get()}"
             yield scrapy.Request(url=url, callback=self.parse_repo, headers=self.headers)
