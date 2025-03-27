@@ -11,7 +11,7 @@ load_dotenv()
 '''
 Scraper for GitHub repositories
 
-finds the total line count of each file in each repository
+finds the total and median line counts for each programming language across all the repositories on the account
 '''
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
