@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Scraper for GitHub repositories
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
     

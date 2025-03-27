@@ -12,6 +12,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
 
+# Scraper for Jira issue reports
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
     
