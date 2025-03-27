@@ -40,7 +40,7 @@ class GithubSpider(scrapy.Spider):
 
         yield scrapy.Request(url=f"https://issues.apache.org" + xml_link, callback=self.parse_xml, headers=self.headers)
     
-    # Parses the XML export link and accesses the issue report, parsing the information into a csv file
+    # Parses the XML export link and accesses the issue report, writing the information into a csv file
     def parse_xml(self, response):
         root = ET.fromstring(response.body)
 
@@ -116,9 +116,8 @@ class GithubSpider(scrapy.Spider):
 
         data['Comments'] = '\n\n\n'.join(comments_list)
         
-        #parse to csv
+        #generates csv
         with open('jira_issue_information.csv', 'w', newline='') as csvfile:
-            
             fieldnames = ['Type', 'Priority', 'Status', 'Resolution', 'Affected Version', 
                           'Fix Versions', 'Components', 'Labels', 'Patch Info', 
                           'Estimated Complexity', 'Assignee', 'Reporter', 'Created Date', 
@@ -138,7 +137,6 @@ class GithubSpider(scrapy.Spider):
         return f"{unix_timestamp}:{formatted_date}"
 
 def main():
-
     url = "https://issues.apache.org/jira/browse/CAMEL-10597"
     
     if len(sys.argv) != 1:
