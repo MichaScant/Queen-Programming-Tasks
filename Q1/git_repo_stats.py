@@ -1,19 +1,12 @@
-from github import Github
-
 import json
-
 import scrapy
-
 import os
-
 import sys
-
 import re
-
 import yaml
-
 import statistics
 
+from github import Github
 from github import Auth
 
 from dotenv import load_dotenv
