@@ -19,6 +19,9 @@ def print_stastics(stats):
     for stat in stats:
         print(stat)
 
+'''
+Gets basic statistics from the GitHub account using the GitHub API
+'''
 def get_statistics(github_account, token):
     if not token:
         raise EnvironmentError("GITHUB_TOKEN environment variable is not set. Please set it with your GitHub Personal Access Token.")

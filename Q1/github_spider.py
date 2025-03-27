@@ -8,7 +8,11 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Scraper for GitHub repositories
+'''
+Scraper for GitHub repositories
+
+finds the total line count of each file in each repository
+'''
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
     
@@ -24,6 +28,7 @@ class GithubSpider(scrapy.Spider):
 
         self.files_per_repo = {}
 
+    # Starts the scraping process
     def start_requests(self):
         self.headers = {
             'Authorization': f'token {self.token}',
@@ -44,6 +49,7 @@ class GithubSpider(scrapy.Spider):
                 yield scrapy.Request(
                     url=url, callback=self.parse_account, headers=self.headers)
 
+    # Parses the account page and accesses each repository
     def parse_account(self, response):
         repo_list = response.css('ul.ListView-module__ul--vMLEZ')
         repo_items = repo_list.css('li')
@@ -52,6 +58,7 @@ class GithubSpider(scrapy.Spider):
             url = f"https://github.com{repo.css('h3 a::attr(href)').get()}"
             yield scrapy.Request(url=url, callback=self.parse_repo, headers=self.headers)
 
+    # Parses the repository page and accesses each file, recursively accessing directories
     def parse_repo(self, response):
         file_list = response.css('table[aria-labelledby="folders-and-files"] tbody tr')
         for file in file_list:
@@ -68,7 +75,8 @@ class GithubSpider(scrapy.Spider):
 
                     if not extension or extension.lower() in self.valid_extensions:
                         yield scrapy.Request(url=full_url, callback=self.parse_file, cb_kwargs={'filename': filename}, headers=self.headers)
-                        
+
+    # Parses the file page and gets the line count and language
     def parse_file(self, response, filename):
         text = response.css('div.Box-sc-g0xbh4-0.bsDwxw.text-mono div[data-testid="blob-size"] span::text').get()
         if text:

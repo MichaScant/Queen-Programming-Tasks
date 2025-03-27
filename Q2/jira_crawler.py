@@ -12,7 +12,11 @@ from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
 
-# Scraper for Jira issue reports
+'''
+Scraper for Jira issue reports
+
+Accesses all the information from the Jira issue report and stores it in a .csv file
+'''
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
     
@@ -20,6 +24,7 @@ class GithubSpider(scrapy.Spider):
         super(GithubSpider, self).__init__(*args, **kwargs)
         self.url = kwargs.get('url')
     
+    # Starts the scraping process
     def start_requests(self):
         self.headers = {
             'Authorization': f'token {os.environ.get('GITHUB_TOKEN')}',
@@ -28,12 +33,14 @@ class GithubSpider(scrapy.Spider):
             
         yield scrapy.Request(url=self.url, callback=self.parse_report, headers=self.headers)
 
+    # Parses the report page and accesses the XML export link
     def parse_report(self, response):
         # Find the XML export link
         xml_link = response.css('aui-item-link[id="jira.issueviews:issue-xml"]::attr(href)').get()
 
         yield scrapy.Request(url=f"https://issues.apache.org" + xml_link, callback=self.parse_xml, headers=self.headers)
     
+    # Parses the XML export link and accesses the issue report, parsing the information into a csv file
     def parse_xml(self, response):
         root = ET.fromstring(response.body)
 
