@@ -8,7 +8,7 @@ Dependecies
 - validators        # For URL validation
 
 
-Ensure you create a .env and assign GITHUB_TOKEN a Github authentication token
+Ensure you create a .env and within the file, assign GITHUB_TOKEN a Github authentication token
 
 Q1: Gets statistics for all Github repositories associated with a specific account. Account is specified by command line argument.
 
