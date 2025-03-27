@@ -58,13 +58,13 @@ def main():
 
     token = os.environ.get('GITHUB_TOKEN')
 
-    # Part 1
+    # Part 1: Get basic statistics from the GitHub account
     
     stats = get_statistics(github_account, token)
 
     print_stastics(stats)
 
-    # Part 2
+    # Part 2: Get line counts and median line counts from each repository
 
     process = CrawlerProcess()
     
