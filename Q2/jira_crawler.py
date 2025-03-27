@@ -1,22 +1,16 @@
 import scrapy
-
-import os
-
 import re
-
-import pdb
-
+import os
 import xml.etree.ElementTree as ET
-
 import csv
-
 from bs4 import BeautifulSoup
-
 from datetime import datetime
 
 from scrapy.crawler import CrawlerProcess
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
+
+TOKEN = os.environ.get('GITHUB_TOKEN')
 
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
@@ -25,19 +19,21 @@ class GithubSpider(scrapy.Spider):
         super(GithubSpider, self).__init__(*args, **kwargs)
 
     def start_requests(self):
+        self.headers = {
+            'Authorization': f'token {TOKEN}',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        }
             
         url = "https://issues.apache.org/jira/browse/CAMEL-10597"
-        yield scrapy.Request(url=url, callback=self.parse_report)
+        yield scrapy.Request(url=url, callback=self.parse_report, headers=self.headers)
 
     def parse_report(self, response):
         # Find the XML export link
         xml_link = response.css('aui-item-link[id="jira.issueviews:issue-xml"]::attr(href)').get()
 
-        yield scrapy.Request(url=f"https://issues.apache.org" + xml_link, callback=self.parse_xml)
-        
+        yield scrapy.Request(url=f"https://issues.apache.org" + xml_link, callback=self.parse_xml, headers=self.headers)
     
     def parse_xml(self, response):
-        
         root = ET.fromstring(response.body)
 
         data = {}
@@ -128,7 +124,6 @@ class GithubSpider(scrapy.Spider):
         return re.sub(r'\n+', '\n', text).strip()
     
     def format_date(self, date_string):
-
         date_obj = datetime.strptime(date_string, "%a, %d %b %Y %H:%M:%S %z")
         formatted_date = date_obj.strftime("%d/%b/%y %H:%M")
         unix_timestamp = int(date_obj.timestamp())
@@ -140,8 +135,7 @@ def main():
     
     def spider_closed(spider):
         print("Processing completed, here are the following results:")
-
-    
+        
     dispatcher.connect(spider_closed, signal=signals.spider_closed)
 
     process.crawl(GithubSpider)
