@@ -15,6 +15,7 @@ API for this part, but you may use any other tool or library).
 
 ## Implementation
 
+- List of Programming Languages and corresponding file extensions are obtained from the YAML file extracted from the Github linguist project 
 - Basic statistics are retrieved using the GitHub API.
 - Line counts from each repository are retrieved using a web scraper. This allows us to avoid repeatedly cloning the repository, which may include large data files.
     - Scraper searches accesses each repository and accesses each file list.
