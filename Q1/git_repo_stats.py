@@ -15,13 +15,11 @@ from github_spider import GithubSpider
 # Load environment variables from .env file
 load_dotenv()
 
-TOKEN = os.environ.get('GITHUB_TOKEN')
-
 def print_stastics(stats):
     for stat in stats:
         print(stat)
 
-def get_statistics(github_account):
+def get_statistics(github_account, TOKEN):
     if not TOKEN:
         raise EnvironmentError("GITHUB_TOKEN environment variable is not set. Please set it with your GitHub Personal Access Token.")
     
@@ -55,9 +53,11 @@ def main():
     if len(sys.argv) != 1:
         github_account = sys.argv[1]
 
+    TOKEN = os.environ.get('GITHUB_TOKEN')
+
     # Part 1
     
-    stats = get_statistics(github_account)
+    stats = get_statistics(github_account, TOKEN)
 
     print_stastics(stats)
 
@@ -66,14 +66,13 @@ def main():
     process = CrawlerProcess()
     
     def spider_closed(spider):
-        print("Processing completed, here are the following results:")
+        print("Processing completed, results:")
 
         '''print("File counts per repository:")
         for repo_name, file_count in spider.files_per_repo.items():
             print(f"Repository: {repo_name}, File count: {file_count}")'''
 
         for title, data in spider.processed_languages_extensions_count.items():
-
             median = 0
             if (data['total'] > 0):
                 median = spider.calculate_median(data['values'])
@@ -82,7 +81,7 @@ def main():
     
     dispatcher.connect(spider_closed, signal=signals.spider_closed)
 
-    process.crawl(GithubSpider, github_account=github_account)
+    process.crawl(GithubSpider, github_account=github_account, token=TOKEN)
     process.start()
     
 if __name__ == "__main__":

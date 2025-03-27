@@ -10,8 +10,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-TOKEN = os.environ.get('GITHUB_TOKEN')
-
 class GithubSpider(scrapy.Spider):
     name = 'github_spider'
     
@@ -19,7 +17,8 @@ class GithubSpider(scrapy.Spider):
         super(GithubSpider, self).__init__(*args, **kwargs)
         
         self.github_account = kwargs.get('github_account')
-        
+        self.token = kwargs.get('token')
+
         self.valid_language_names = set()
         self.valid_extensions = set()
         self.processed_languages_extensions_count = {}
@@ -28,7 +27,7 @@ class GithubSpider(scrapy.Spider):
 
     def start_requests(self):
         self.headers = {
-            'Authorization': f'token {TOKEN}',
+            'Authorization': f'token {self.token}',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         }
     
