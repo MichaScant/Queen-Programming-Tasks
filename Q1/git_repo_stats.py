@@ -6,6 +6,8 @@ import scrapy
 
 import os
 
+import sys
+
 import re
 
 import pdb
@@ -31,6 +33,7 @@ class GithubSpider(scrapy.Spider):
     
     def __init__(self, *args, **kwargs):
         super(GithubSpider, self).__init__(*args, **kwargs)
+        self.github_account = kwargs.get('github_account')
         self.valid_language_names = set()
         self.extensions_to_language_names = set()
         self.processed_languages_extensions_count = {}
@@ -53,7 +56,7 @@ class GithubSpider(scrapy.Spider):
                 for extension in value['extensions']:
                     self.extensions_to_language_names.add(extension)
 
-        url = "https://github.com/orgs/Kaggle/repositories"
+        url = f"https://github.com/orgs/{self.github_account}/repositories"
         yield scrapy.Request(url=url, callback=self.parse_account, headers=self.headers)
 
     def parse_account(self, response):
@@ -113,7 +116,7 @@ def print_stastics(stats):
     for stat in stats:
         print(stat)
 
-def get_statistics():
+def get_statistics(github_account):
     token = os.environ.get('GITHUB_TOKEN')
     if not token:
         raise EnvironmentError("GITHUB_TOKEN environment variable is not set. Please set it with your GitHub Personal Access Token.")
@@ -122,7 +125,7 @@ def get_statistics():
     
     g = Github(auth=auth)
     
-    user = g.get_user("Kaggle")
+    user = g.get_user(github_account)
     
     repos_info = []
     
@@ -143,9 +146,15 @@ def get_statistics():
 
 def main():
 
+    #argument parser
+    github_account = 'Kaggle'
+    
+    if len(sys.argv) != 1:
+        github_account = sys.argv[1]
+
     # Part 1
     
-    stats = get_statistics()
+    stats = get_statistics(github_account)
 
     print_stastics(stats)
 
@@ -166,7 +175,7 @@ def main():
     
     dispatcher.connect(spider_closed, signal=signals.spider_closed)
 
-    process.crawl(GithubSpider)
+    process.crawl(GithubSpider, github_account=github_account)
     process.start()
     
 if __name__ == "__main__":
