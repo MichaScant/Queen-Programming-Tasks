@@ -1,3 +1,5 @@
+## Task
+
 Crawl Issue Reports
 
 I plan to study all issue reports filed against Apache Camel project. However, there is no
@@ -20,3 +22,9 @@ Ln1 Type,...,Assignee,...,Created,Created Epoch,...,Description,Comments
 Ln2 Bug,...,Claus Ibsen,...,2016-12-14T14:42:08+0000,1481726528,...,Assume
 I have rest path ...,ASF GitHub Bot:1481745300:14/Dec/16 14:55:‘‘GitHub
 user bobpaulin opened a pull request: ...
+
+## Implementation
+
+- Web scraper is used to access the Jira issue report passed in as a command line argument.
+- Scraper located the export button and returns an XML version of the issue report.
+- The XML is parsed and all information is stored in a .csv file.
