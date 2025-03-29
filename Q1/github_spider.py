@@ -1,9 +1,13 @@
 import scrapy
 import os
-import re
 import yaml
 import statistics
 import logging
+import pdb
+import subprocess
+import json
+import requests
+import tempfile
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -19,12 +23,15 @@ class GithubSpider(scrapy.Spider):
     
     def __init__(self, *args, **kwargs):
         super(GithubSpider, self).__init__(*args, **kwargs)
+
+        #removes all the scrapy logging messages from the console
         logging.getLogger('scrapy').setLevel(logging.WARNING)
-        
+        logging.getLogger('urllib3').propagate = False
+        logging.getLogger('chardet.charsetprober').setLevel(logging.INFO)
+
         self.github_account = kwargs.get('github_account')
         self.token = kwargs.get('token')
 
-        self.valid_language_names = set()
         self.valid_extensions = set()
         self.processed_languages_extensions_count = {}
 
@@ -37,13 +44,12 @@ class GithubSpider(scrapy.Spider):
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         }
     
+        # Load the list of programming file extensions from the GitHub Linguist language list
         with open('languages.yml') as f:
             languages = yaml.safe_load(f)
 
         for key, value in languages.items():
             if (value['type'] == 'programming' and 'extensions' in value):
-                self.valid_language_names.add(key)
-                
                 for extension in value['extensions']:
                     self.valid_extensions.add(extension)
 
@@ -61,44 +67,88 @@ class GithubSpider(scrapy.Spider):
 
     # Parses the repository page and accesses each file, recursively accessing directories
     def parse_repo(self, response):
-        file_list = response.css('table[aria-labelledby="folders-and-files"] tbody tr')
-        for file in file_list:
-            name = file.css('.react-directory-filename-column .react-directory-truncate a::text').get()
-            full_url =  f"https://github.com{file.css('.react-directory-filename-column .react-directory-truncate a::attr(href)').get()}"
+        try:
+            repository_data = response.css('script[data-target="react-app.embeddedData"]::text').get()
+            repository_json_data = None
+            file_list = None
+            default_branch = None
 
-            is_directory = file.css('svg.octicon-file-directory-fill.icon-directory').get() is not None
-            
-            if is_directory:
-                yield scrapy.Request(url=full_url, callback=self.parse_repo, headers=self.headers)
+            if not repository_data:
+                scripts = response.css('script[data-target="react-partial.embeddedData"]::text').getall()
+                for script in scripts:
+                    if script:
+                        repository_json_data = json.loads(script)
+                        if 'initialPayload' in repository_json_data['props']:
+                            file_list = repository_json_data['props']['initialPayload']['tree']['items']
+                            default_branch = repository_json_data['props']['initialPayload']['repo']['defaultBranch']
+                            break
             else:
-                if name is not None:
-                    filename, extension = os.path.splitext(name)
+                repository_json_data = json.loads(repository_data)
+                file_list = repository_json_data['payload']['tree']['items']
+                default_branch = repository_json_data['payload']['repo']['defaultBranch']
+            
+            if file_list:
+                for file in file_list:
+                    name = file['name']
+                    if not name:
+                        continue
 
-                    if not extension or extension.lower() in self.valid_extensions:
-                        yield scrapy.Request(url=full_url, callback=self.parse_file, cb_kwargs={'filename': filename}, headers=self.headers)
+                    base_repo_url = '/'.join(response.url.split('/')[:5])
 
-    # Parses the file page and gets the line count and language
-    def parse_file(self, response, filename):
-        text = response.css('div.Box-sc-g0xbh4-0.bsDwxw.text-mono div[data-testid="blob-size"] span::text').get()
-        if text:
-            matches = re.search(r'\((\d+)\s+loc\)', text)
-            if matches:
-                loc = matches.group(1)
+                    if file['contentType'] == 'directory':
+                        full_url = f"{base_repo_url}/tree/{default_branch}/{file['path']}"
 
-                script = response.css('script[data-target="react-app.embeddedData"]::text').get()
-
-                lang_marker = '"language":"'
-                start = script.find(lang_marker) + len(lang_marker)
-                end = script.find('"', start)
-                
-                language = script[start:end]
-
-                if language in self.valid_language_names:
-                    if language not in self.processed_languages_extensions_count:
-                        self.processed_languages_extensions_count[language] = {'total': int(loc), 'values': [int(loc)]}
+                        yield scrapy.Request(url=full_url, callback=self.parse_repo, headers=self.headers)
                     else:
-                        self.processed_languages_extensions_count[language]['total'] += int(loc)
-                        self.processed_languages_extensions_count[language]['values'].append(int(loc))
+                        full_url = f"{base_repo_url}/blob/{default_branch}/{file['path']}"
+
+                        filename, extension = os.path.splitext(name)
+
+                        if not extension or extension.lower() in self.valid_extensions:
+                            yield scrapy.Request(url=full_url, callback=self.parse_file_code, headers=self.headers)
+                            
+        except Exception as e:
+            logging.error(f"Error parsing repository {response.url}: {str(e)}")
+
+    # Parses the code from the file and gets the line count and language using cloc library
+    def parse_file_code(self, response):
+        try:
+            source_file = response.url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/')
+            filename = source_file.split('/')[-1]  
+
+            request_response = requests.get(source_file)
+            source_file_text = request_response.text
+
+            prefix, suffix = os.path.splitext(filename)
+
+            #if the file has no extension, add the extension for detecting the language
+            #as cloc relies on the extension to detect the file type
+            if not suffix:
+                suffix = f'.{filename.lower()}'
+
+            # Download the source code into a temporary file and run CLOC to obtain the language and LOC count
+            with tempfile.NamedTemporaryFile(mode='w', suffix=suffix, delete=True) as tmp_file:
+                tmp_file.write(source_file_text)
+                tmp_file.flush()
+
+                analysis = subprocess.run(['cloc', '--json', tmp_file.name], capture_output=True, text=True, check=True).stdout
+
+                analysis_json = json.loads(analysis)
+
+            # Obtain the language and LOC count from the CLOC output
+            if (analysis_json):
+                #second key is the language type
+                language = list(analysis_json.keys())[1]
+                lines_of_source_code = analysis_json[language]['code']
+
+                if language not in self.processed_languages_extensions_count:
+                    self.processed_languages_extensions_count[language] = {'total': int(lines_of_source_code), 'values': [int(lines_of_source_code)]}
+                else:
+                    self.processed_languages_extensions_count[language]['total'] += int(lines_of_source_code)
+                    self.processed_languages_extensions_count[language]['values'].append(int(lines_of_source_code))
+        
+        except Exception as e:
+            logging.error(f"Error parsing file {response.url}: {str(e)}")
 
     def calculate_median(self, values):
         return statistics.median(values) 

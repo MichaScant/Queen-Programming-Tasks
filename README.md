@@ -6,7 +6,8 @@ Dependecies
 - PyYAML            # For YAML file handling
 - beautifulsoup4    # For HTML parsing
 - validators        # For URL validation
-
+- cloc              # For counting lines of code
+- requests          # For testing URLs
 
 Ensure you create a .env and within the file, assign GITHUB_TOKEN a Github authentication token
 
