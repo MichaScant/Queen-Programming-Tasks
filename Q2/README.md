@@ -24,3 +24,8 @@ The example output is: Ln1 Type,...,Assignee,...,Created,Created Epoch,...,Descr
 - Web scraper is used to access the Jira issue report passed in as a command line argument.
 - Scraper locates the export button and uses it to generate an XML version of the issue report.
 - The XML is parsed and all information is stored in a .csv file.
+
+## Running the script
+
+Use python3 jira_crawler.py followed by a Jira issue url to run the file on a specific jira url (Ex: python3 jira_crawler.py https://issues.apache.org/jira/browse/CAMEL-10597)
+- if no issue is specificed or a url is not passed in, the program will default to using the example provided in the Task
